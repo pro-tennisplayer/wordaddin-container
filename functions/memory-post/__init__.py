@@ -9,11 +9,13 @@ import ssl
 
 def get_db_params_from_url(conn_str: str):
 	parsed = urllib.parse.urlparse(conn_str)
+	username = urllib.parse.unquote(parsed.username) if parsed.username else None
+	password = urllib.parse.unquote(parsed.password) if parsed.password else None
 	return {
 		"host": parsed.hostname,
 		"port": parsed.port or 5432,
-		"user": parsed.username,
-		"password": parsed.password,
+		"user": username,
+		"password": password,
 		"database": parsed.path[1:] if parsed.path else "postgres",
 		"ssl_context": ssl.create_default_context(),
 	}
