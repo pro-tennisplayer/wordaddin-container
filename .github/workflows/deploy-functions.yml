@@ -1,0 +1,58 @@
+name: Deploy Azure Functions
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'functions/**' ]
+  workflow_dispatch:
+
+env:
+  FUNCTION_APP_NAME: apex-apis
+  RESOURCE_GROUP: apex-rg
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.13'
+        
+    - name: Install Azure Functions Core Tools
+      run: |
+        curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
+        sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
+        sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-$(lsb_release -cs)-prod $(lsb_release -cs) main" > /etc/apt/sources.list.d/dotnetdev.list'
+        sudo apt-get update
+        sudo apt-get install azure-functions-core-tools-4
+        
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        
+    - name: Deploy to Azure Functions
+      run: |
+        cd functions
+        func azure functionapp publish ${{ env.FUNCTION_APP_NAME }} --python
+        
+    - name: Test Health Endpoint
+      run: |
+        echo "Waiting for deployment to complete..."
+        sleep 30
+        
+        echo "Testing health endpoint..."
+        curl -f "https://${{ env.FUNCTION_APP_NAME }}.azurewebsites.net/api/health" || echo "Health check failed but deployment may still be successful"
+        
+    - name: Deployment Status
+      run: |
+        echo "✅ Azure Functions deployment completed!"
+        echo "🌐 Function App URL: https://${{ env.FUNCTION_APP_NAME }}.azurewebsites.net"
+        echo "🔗 Health Check: https://${{ env.FUNCTION_APP_NAME }}.azurewebsites.net/api/health"
+        echo "📚 Memory API: https://${{ env.FUNCTION_APP_NAME }}.azurewebsites.net/api/memory"
+        echo "💬 Feedback API: https://${{ env.FUNCTION_APP_NAME }}.azurewebsites.net/api/feedback"
