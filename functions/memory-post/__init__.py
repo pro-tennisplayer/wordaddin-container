@@ -4,6 +4,7 @@ from datetime import datetime
 import os
 import urllib.parse
 import pg8000
+import ssl
 
 
 def get_db_params_from_url(conn_str: str):
@@ -14,6 +15,7 @@ def get_db_params_from_url(conn_str: str):
 		"user": parsed.username,
 		"password": parsed.password,
 		"database": parsed.path[1:] if parsed.path else "postgres",
+		"ssl_context": ssl.create_default_context(),
 	}
 
 
