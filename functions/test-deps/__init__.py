@@ -1,67 +1,66 @@
 import azure.functions as func
 import json
-import sys
+from datetime import datetime
+import asyncio
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
-    """Test function to check dependencies and diagnose issues"""
+async def main(req: func.HttpRequest) -> func.HttpResponse:
+    """Test dependencies and database connectivity"""
+    results = {
+        'status': 'testing',
+        'timestamp': datetime.utcnow().isoformat(),
+        'python_version': f"{asyncio.get_event_loop().get_debug()}",  # Simplified version check
+        'imports': {}
+    }
+    
+    # Test asyncpg import
     try:
-        # Test basic imports
-        test_results = {
-            'status': 'testing',
-            'python_version': sys.version,
-            'imports': {},
-            'database_test': {}
-        }
-        
-        # Test psycopg2 import
-        try:
-            import psycopg2
-            test_results['imports']['psycopg2'] = 'SUCCESS'
-            test_results['imports']['psycopg2_version'] = psycopg2.__version__
-        except ImportError as e:
-            test_results['imports']['psycopg2'] = f'FAILED: {str(e)}'
-        
-        # Test other imports
-        try:
-            import uuid
-            test_results['imports']['uuid'] = 'SUCCESS'
-        except ImportError as e:
-            test_results['imports']['uuid'] = f'FAILED: {str(e)}'
-            
-        try:
-            from datetime import datetime
-            test_results['imports']['datetime'] = 'SUCCESS'
-        except ImportError as e:
-            test_results['imports']['datetime'] = f'FAILED: {str(e)}'
-        
-        # Test database connection
-        try:
-            import psycopg2
-            conn = psycopg2.connect(
-                host="apex-psql-toebb934.postgres.database.azure.com",
-                database="apexdb",
-                user="psqladmin",
-                password="ApexSecurePass123!",
-                port="5432"
-            )
-            test_results['database_test']['connection'] = 'SUCCESS'
-            conn.close()
-        except Exception as e:
-            test_results['database_test']['connection'] = f'FAILED: {str(e)}'
-        
-        return func.HttpResponse(
-            json.dumps(test_results, indent=2),
-            status_code=200,
-            mimetype="application/json"
-        )
-        
+        import asyncpg
+        results['imports']['asyncpg'] = 'SUCCESS'
     except Exception as e:
-        return func.HttpResponse(
-            json.dumps({
-                'status': 'error',
-                'error': str(e),
-                'traceback': str(sys.exc_info())
-            }),
-            status_code=500,
-            mimetype="application/json"
-        )
+        results['imports']['asyncpg'] = f'FAILED: {str(e)}'
+    
+    # Test uuid import
+    try:
+        import uuid
+        results['imports']['uuid'] = 'SUCCESS'
+    except Exception as e:
+        results['imports']['uuid'] = f'FAILED: {str(e)}'
+    
+    # Test datetime import
+    try:
+        from datetime import datetime
+        results['imports']['datetime'] = 'SUCCESS'
+    except Exception as e:
+        results['imports']['datetime'] = f'FAILED: {str(e)}'
+    
+    # Test database connection
+    try:
+        # Get connection string from environment
+        import os
+        conn_str = os.environ.get('POSTGRES_CONNECTION')
+        if conn_str:
+            # Parse connection string to get individual components
+            # Format: postgresql://username:password@host:port/database
+            import urllib.parse
+            parsed = urllib.parse.urlparse(conn_str)
+            
+            # Test connection with asyncpg
+            conn = await asyncpg.connect(
+                host=parsed.hostname,
+                port=parsed.port or 5432,
+                user=parsed.username,
+                password=parsed.password,
+                database=parsed.path[1:] if parsed.path else 'postgres'
+            )
+            await conn.close()
+            results['imports']['database_connection'] = 'SUCCESS'
+        else:
+            results['imports']['database_connection'] = 'FAILED: No connection string found'
+    except Exception as e:
+        results['imports']['database_connection'] = f'FAILED: {str(e)}'
+    
+    return func.HttpResponse(
+        json.dumps(results, indent=2),
+        status_code=200,
+        mimetype="application/json"
+    )
