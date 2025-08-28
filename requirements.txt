@@ -1,8 +1,8 @@
 # Azure Functions dependencies
 azure-functions==1.17.0
 
-# Database connectivity
-psycopg2-binary==2.9.9
+# Database connectivity - use pure Python version
+psycopg2==2.9.9
 
 # Environment and utilities
 python-dotenv==1.0.0
