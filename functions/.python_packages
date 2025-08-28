@@ -1,2 +1,0 @@
-# This file forces Azure Functions to install Python packages
-# from requirements.txt during deployment
