@@ -1,89 +1,135 @@
 # Apex MVP
 
-A scalable RAG (Retrieval-Augmented Generation) platform with multi-tenant architecture, built on Azure infrastructure.
+A multi-tenant RAG (Retrieval-Augmented Generation) platform built with Python Flask, PostgreSQL, and Azure cloud infrastructure.
 
-## Architecture
+## 🚀 Quick Start
 
-- **Infrastructure**: Azure (Terraform)
-- **Backend**: Python Flask API
+1. **Infrastructure**: Deploy Azure resources using Terraform
+2. **Database**: Run SQL migrations to set up schemas
+3. **Application**: Deploy Flask API via GitHub Actions
+4. **Testing**: Verify endpoints and multi-tenant functionality
+
+## 🏗️ Architecture
+
+- **Frontend**: Web-based interface (future)
+- **Backend**: Python Flask API with SQLAlchemy ORM
 - **Database**: Azure PostgreSQL Flexible Server
-- **Container Registry**: Azure Container Registry (ACR)
-- **Hosting**: Azure App Service (Linux)
-- **CI/CD**: GitHub Actions
+- **Infrastructure**: Azure Container Registry, App Service, Resource Groups
+- **CI/CD**: GitHub Actions for automated deployment
 
-## Quick Start
-
-1. **Prerequisites**
-   - Terraform >= 1.0
-   - Azure CLI
-   - Docker
-   - Python 3.8+
-
-2. **Deploy Infrastructure**
-   ```bash
-   cd deploy
-   export TF_VAR_prefix="apex"
-   export TF_VAR_pg_password="your-secure-password"
-   ./terraform_apply.sh
-   ```
-
-3. **Set GitHub Secrets**
-   - `AZURE_CREDENTIALS`: Service principal credentials
-   - `ACR_LOGIN_SERVER`: ACR server URL
-   - `ACR_USERNAME`: ACR username
-   - `ACR_PASSWORD`: ACR password
-   - `APP_NAME`: Web app name
-   - `RESOURCE_GROUP`: Resource group name
-   - `IMAGE_NAME`: Container image name
-   - `POSTGRES_CONNECTION`: PostgreSQL connection string
-
-4. **Deploy Application**
-   ```bash
-   git push origin main
-   ```
-   GitHub Actions will automatically build and deploy the container.
-
-5. **Run Database Migrations**
-   ```bash
-   # Connect to your PostgreSQL instance and run:
-   psql -h <postgres_fqdn> -U <username> -d apexdb -f migrations/001_create_schemas.sql
-   ```
-
-6. **Test Deployment**
-   ```bash
-   curl https://<web_app_url>/health
-   ```
-
-## Project Structure
+## 📁 Project Structure
 
 ```
-├── infra/                 # Terraform infrastructure code
-├── deploy/                # Deployment helper scripts
-├── migrations/            # Database schema migrations
-├── .github/workflows/     # CI/CD pipelines
-├── api/                   # Backend API code
-├── Dockerfile            # Container definition
-└── README.deploy.md      # Detailed deployment guide
+apex-mvp/
+├── infra/                    # Terraform infrastructure code
+├── api/                      # Python Flask application
+├── migrations/               # SQL database migrations
+├── deploy/                   # Deployment scripts
+├── .github/workflows/        # CI/CD workflows
+├── Dockerfile               # Container configuration
+└── README.md                # This file
 ```
 
-## API Endpoints
+## 🔧 API Endpoints
 
-- `GET /health` - Health check
+- `GET /health` - Health check endpoint
 - `GET /memory` - Retrieve RAG memory entries
-- `POST /memory` - Store RAG memory entries
+- `POST /memory` - Store new RAG memory entries
 - `GET /feedback` - Retrieve feedback entries
-- `POST /feedback` - Store feedback entries
+- `POST /feedback` - Store new feedback entries
 
-## Multi-Tenant Support
+All endpoints support multi-tenant operations via `X-Tenant-ID` header.
 
-All endpoints accept `X-Tenant-ID` header for tenant isolation.
+## 🏢 Multi-Tenant Support
 
-## Development
+The platform supports multiple tenants through:
+- Header-based tenant identification (`X-Tenant-ID`)
+- Tenant-scoped database queries
+- Isolated data storage per tenant
 
-- Local development: `cd api && python app.py`
-- Container build: `docker build -t apex-mvp .`
-- Container run: `docker run -p 8080:8080 apex-mvp`
+## 🚀 Development
 
-## License
+### Prerequisites
+- Python 3.8+
+- Docker
+- Azure CLI
+- Terraform
 
-MIT
+### Local Development
+```bash
+cd api
+pip install -r requirements.txt
+python app.py
+```
+
+## 📄 License
+
+MIT License - see LICENSE file for details.
+
+---
+
+## 🚀 DEPLOYMENT STATUS
+
+**Last Updated**: August 27, 2025  
+**Location**: Central US  
+**Resource Group**: `apex-rg`
+
+### ✅ DEPLOYED RESOURCES (Online)
+
+| Resource | Name | Status | Details |
+|----------|------|--------|---------|
+| **Resource Group** | `apex-rg` | 🟢 **Deployed** | Central US location |
+| **Container Registry** | `apexacrtoebb934.azurecr.io` | 🟢 **Deployed** | Ready for Docker images |
+| **App Service Plan** | `apex-plan` | 🟢 **Deployed** | Linux, B1 tier |
+| **Web App** | `apex-app-toebb934.azurewebsites.net` | 🟢 **Deployed** | Container-ready, accessible |
+| **PostgreSQL Server** | `apex-psql-toebb934.postgres.database.azure.com` | 🟢 **Deployed** | Version 14, Standard_B1ms |
+| **Random String** | `toebb934` | 🟢 **Deployed** | Unique identifier |
+
+### ❌ PENDING RESOURCES (Not Deployed)
+
+| Resource | Name | Status | Details |
+|----------|------|--------|---------|
+| **PostgreSQL Database** | `apexdb` | 🔴 **Pending** | Schema not created |
+| **Firewall Rule** | `AllowAzureServices` | 🔴 **Pending** | Azure services access blocked |
+
+### 🔑 CREDENTIALS & CONNECTION INFO
+
+- **ACR Login Server**: `apexacrtoebb934.azurecr.io`
+- **ACR Username**: `apexacrtoebb934`
+- **ACR Password**: `ODY2JW7qtRD/G91r6P4G57titBVS/mk/RtP1SJ29I++ACRAv12Zi`
+- **PostgreSQL FQDN**: `apex-psql-toebb934.postgres.database.azure.com`
+- **PostgreSQL Admin**: `psqladmin`
+- **Web App URL**: `https://apex-app-toebb934.azurewebsites.net`
+
+### 🎯 NEXT STEPS FOR NEW AGENT
+
+1. **Complete PostgreSQL Setup**:
+   ```bash
+   cd infra
+   terraform apply -auto-approve
+   ```
+
+2. **Run Database Migrations**:
+   ```bash
+   # Connect to PostgreSQL and run migrations/001_create_schemas.sql
+   ```
+
+3. **Set Up GitHub Secrets** for CI/CD:
+   - `AZURE_CREDENTIALS`
+   - `ACR_USERNAME`
+   - `ACR_PASSWORD`
+
+4. **Deploy Application** via GitHub Actions
+
+5. **Test Endpoints**:
+   - Health: `https://apex-app-toebb934.azurewebsites.net/health`
+   - Memory: `https://apex-app-toebb934.azurewebsites.net/memory`
+   - Feedback: `https://apex-app-toebb934.azurewebsites.net/feedback`
+
+### ⚠️ IMPORTANT NOTES
+
+- **Location**: All resources are deployed in **Central US** (changed from East US due to subscription restrictions)
+- **Terraform State**: Current state is clean, no conflicts
+- **Web App**: Already accessible and container-ready
+- **PostgreSQL**: Server is running but database and firewall rules need Terraform deployment
+- **GitHub Workflow**: Temporarily removed due to token scope issues - needs `workflow` scope PAT

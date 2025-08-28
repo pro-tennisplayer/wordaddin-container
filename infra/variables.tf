@@ -13,7 +13,7 @@ variable "pg_password" {
 variable "location" {
   description = "Azure region for resources"
   type        = string
-  default     = "East US"
+  default     = "Central US"
 }
 
 variable "image_name" {

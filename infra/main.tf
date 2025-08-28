@@ -5,6 +5,10 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 3.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
   }
 }
 
@@ -64,11 +68,7 @@ resource "azurerm_linux_web_app" "main" {
 
   site_config {
     application_stack {
-      docker {
-        registry_url = azurerm_container_registry.main.login_server
-        image_name   = var.image_name
-        image_tag    = var.image_tag
-      }
+      docker_image_name = "${azurerm_container_registry.main.login_server}/${var.image_name}:${var.image_tag}"
     }
     always_on = true
   }
@@ -96,6 +96,7 @@ resource "azurerm_postgresql_flexible_server" "main" {
   administrator_password = var.pg_password
   storage_mb             = 32768
   sku_name               = "B_Standard_B1ms"
+  zone                   = "2"
   tags = {
     Environment = "Production"
     Project     = "Apex-MVP"
