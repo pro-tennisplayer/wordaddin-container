@@ -96,7 +96,7 @@ MIT License - see LICENSE file for details.
 
 - **ACR Login Server**: `apexacrtoebb934.azurecr.io`
 - **ACR Username**: `apexacrtoebb934`
-- **ACR Password**: `ODY2JW7qtRD/G91r6P4G57titBVS/mk/RtP1SJ29I++ACRAv12Zi`
+- **ACR Password**: `[REDACTED - Set as GitHub Secret]`
 - **PostgreSQL FQDN**: `apex-psql-toebb934.postgres.database.azure.com`
 - **PostgreSQL Admin**: `psqladmin`
 - **Web App URL**: `https://apex-app-toebb934.azurewebsites.net`
