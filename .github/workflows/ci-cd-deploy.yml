@@ -43,7 +43,7 @@ jobs:
         cache-to: type=gha,mode=max
 
     - name: Deploy to Azure Web App
-      uses: azure/webapps-deploy@v4
+      uses: azure/webapps-deploy@v3
       with:
         app-name: ${{ secrets.WEBAPP_NAME }}
         resource-group-name: ${{ secrets.RESOURCE_GROUP }}
