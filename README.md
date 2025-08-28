@@ -20,16 +20,11 @@ A multi-tenant RAG (Retrieval-Augmented Generation) platform built with Python F
 ### Primary: Azure Functions (Live & Ready)
 - **Frontend**: Web-based interface (future)
 - **Backend**: Azure Functions with Python runtime
-- **Database**: Mock data (ready for PostgreSQL integration)
+- **Database**: Azure PostgreSQL (live via pg8000, SSL enabled)
 - **Infrastructure**: Azure Function App, App Service Plan
-- **Deployment**: Instant deployment, no CI/CD needed
+- **Deployment**: GitHub Actions deploys Functions
 
-### Alternative: Flask Container (Advanced)
-- **Frontend**: Web-based interface (future)
-- **Backend**: Python Flask API with SQLAlchemy ORM
-- **Database**: Azure PostgreSQL Flexible Server
-- **Infrastructure**: Azure Container Registry, App Service, Resource Groups
-- **CI/CD**: GitHub Actions for automated deployment
+<!-- Flask container path removed; Azure Functions is the primary and only supported backend now. -->
 
 ## 📁 Project Structure
 
@@ -39,8 +34,7 @@ apex-mvp/
 ├── api/                      # Python Flask application
 ├── migrations/               # SQL database migrations
 ├── deploy/                   # Deployment scripts
-├── .github/workflows/        # CI/CD workflows
-├── Dockerfile               # Container configuration
+├── .github/workflows/        # CI/CD workflows (Functions)
 └── README.md                # This file
 ```
 
@@ -57,7 +51,21 @@ apex-mvp/
 | `/api/feedback` | GET | Retrieve feedback entries | ✅ **Live** |
 | `/api/feedback` | POST | Store new feedback entry | ✅ **Live** |
 
-**Headers**: All endpoints support multi-tenant operations via `X-Tenant-ID` header
+#### Request details
+
+- GET `/api/memory`
+  - Query params: `tenant_id` (required), `user_id` (optional), `session_id` (optional), `limit` (optional, default 100)
+- POST `/api/memory`
+  - JSON body: `tenant_id`, `user_id`, `session_id`, `content` (required); `message_type` (default `chat`), `metadata` (object)
+- GET `/api/feedback`
+  - Query params: `tenant_id` (required), `user_id` (optional), `response_id` (optional), `limit` (optional, default 100)
+- POST `/api/feedback`
+  - JSON body: `tenant_id`, `user_id`, `response_id`, `rating` (1-5) (required); `feedback_text` (alias `feedback`), `metadata` (object)
+
+Required app setting on Function App:
+- `POSTGRES_CONNECTION` (Application setting)
+  - Example: `postgresql://psqladmin:ApexSecurePass123%21@apex-psql-toebb934.postgres.database.azure.com:5432/apexdb`
+  - Notes: URL-encode password; SSL is enabled in code
 
 ### 🔧 **Flask Container (Alternative)**
 - `GET /health` - Health check endpoint
@@ -85,57 +93,56 @@ Your APIs are **LIVE NOW** at `https://apex-apis.azurewebsites.net`
 # Health Check
 curl https://apex-apis.azurewebsites.net/api/health
 
-# Get Memory (with tenant ID)
-curl -H "X-Tenant-ID: your-tenant" https://apex-apis.azurewebsites.net/api/memory
-
-# Create Memory Entry
-curl -X POST -H "Content-Type: application/json" -H "X-Tenant-ID: your-tenant" \
-  -d '{"content": "Test memory entry"}' \
+# Create Memory Entry (POST)
+curl -X POST -H "Content-Type: application/json" \
+  -d '{
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "session_id": "s1",
+        "content": "Hello from curl",
+        "metadata": {"source":"curl"}
+      }' \
   https://apex-apis.azurewebsites.net/api/memory
 
-# Get Feedback
-curl -H "X-Tenant-ID: your-tenant" https://apex-apis.azurewebsites.net/api/feedback
+# Get Memory (GET with filters)
+curl "https://apex-apis.azurewebsites.net/api/memory?tenant_id=t1&user_id=u1&session_id=s1&limit=5"
 
-# Create Feedback Entry
-curl -X POST -H "Content-Type: application/json" -H "X-Tenant-ID: your-tenant" \
-  -d '{"user_id": "user123", "feedback": "Great response!"}' \
+# Create Feedback Entry (POST)
+curl -X POST -H "Content-Type: application/json" \
+  -d '{
+        "tenant_id": "t1",
+        "user_id": "u1",
+        "response_id": "r1",
+        "rating": 5,
+        "feedback_text": "Great answer",
+        "metadata": {"source":"curl"}
+      }' \
   https://apex-apis.azurewebsites.net/api/feedback
+
+# Get Feedback (GET with filters)
+curl "https://apex-apis.azurewebsites.net/api/feedback?tenant_id=t1&user_id=u1&response_id=r1&limit=5"
 ```
 
 #### Frontend Integration:
 ```javascript
 const API_BASE = 'https://apex-apis.azurewebsites.net/api';
-const headers = { 'X-Tenant-ID': 'your-tenant-id' };
 
 // GET memory
-fetch(`${API_BASE}/memory`, { headers })
+fetch(`${API_BASE}/memory?tenant_id=t1&user_id=u1&session_id=s1&limit=5`)
   .then(res => res.json())
   .then(data => console.log(data));
 
 // POST memory
 fetch(`${API_BASE}/memory`, {
   method: 'POST',
-  headers: { ...headers, 'Content-Type': 'application/json' },
-  body: JSON.stringify({ content: 'New memory entry' })
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ tenant_id: 't1', user_id: 'u1', session_id: 's1', content: 'New memory entry' })
 })
 .then(res => res.json())
 .then(data => console.log(data));
 ```
 
-### 🚀 **Development (Advanced)**
-
-#### Prerequisites
-- Python 3.8+
-- Docker
-- Azure CLI
-- Terraform
-
-#### Local Development
-```bash
-cd api
-pip install -r requirements.txt
-python app.py
-```
+<!-- Local Flask development removed; Azure Functions is the supported path. -->
 
 ## 📄 License
 
@@ -154,9 +161,7 @@ MIT License - see LICENSE file for details.
 | Resource | Name | Status | Details |
 |----------|------|--------|---------|
 | **Resource Group** | `apex-rg` | 🟢 **Deployed** | Central US location |
-| **Container Registry** | `apexacrtoebb934.azurecr.io` | 🟢 **Deployed** | Ready for Docker images |
-| **App Service Plan** | `apex-plan` | 🟢 **Deployed** | Linux, B1 tier |
-| **Web App** | `apex-app-toebb934.azurewebsites.net` | 🟢 **Deployed** | Container-ready, accessible |
+| **Function App** | `apex-apis.azurewebsites.net` | 🟢 **Deployed** | **LIVE APIs READY!** |
 | **PostgreSQL Server** | `apex-psql-toebb934.postgres.database.azure.com` | 🟢 **Deployed** | Version 14, Standard_B1ms |
 | **PostgreSQL Database** | `apexdb` | 🟢 **Deployed** | Database created and ready |
 | **Firewall Rule** | `AllowAzureServices` | 🟢 **Deployed** | Azure services access enabled |
@@ -179,7 +184,7 @@ MIT License - see LICENSE file for details.
 - **PostgreSQL FQDN**: `apex-psql-toebb934.postgres.database.azure.com`
 - **PostgreSQL Admin**: `psqladmin`
 - **PostgreSQL Database**: `apexdb` ✅ **Created**
-- **Web App URL**: `https://apex-app-toebb934.azurewebsites.net`
+- **Function App URL**: `https://apex-apis.azurewebsites.net`
 
 ### 🎯 NEXT STEPS FOR NEW AGENT
 
@@ -188,35 +193,10 @@ MIT License - see LICENSE file for details.
 - **Status**: All APIs working with GET/POST support
 - **Frontend**: Can start building immediately
 
-**🔧 ALTERNATIVE: Flask Container (if needed)**
-1. **✅ PostgreSQL Setup Complete**:
-   - Database `apexdb` is created
-   - Firewall rules are configured
-   - Connection string is set
-
-2. **✅ Database Migrations Complete**:
-   - Schemas are created and ready
-
-3. **✅ GitHub Secrets Configured**:
-   - `AZURE_CREDENTIALS`
-   - `ACR_USERNAME`
-   - `ACR_PASSWORD`
-
-4. **🔴 Fix GitHub Actions Workflow**:
-   - Health check is failing after successful deployment
-   - Container starts but fails startup probe
-   - Need to investigate why Flask app can't connect to database
-
-5. **Test Endpoints**:
-   **🚀 Azure Functions (LIVE):**
-   - Health: `https://apex-apis.azurewebsites.net/api/health`
-   - Memory: `https://apex-apis.azurewebsites.net/api/memory`
-   - Feedback: `https://apex-apis.azurewebsites.net/api/feedback`
-   
-   **🔧 Flask Container (Alternative):**
-   - Health: `https://apex-app-toebb934.azurewebsites.net/health`
-   - Memory: `https://apex-app-toebb934.azurewebsites.net/memory`
-   - Feedback: `https://apex-app-toebb934.azurewebsites.net/feedback`
+**Test Endpoints (Azure Functions):**
+ - Health: `https://apex-apis.azurewebsites.net/api/health`
+ - Memory: `https://apex-apis.azurewebsites.net/api/memory`
+ - Feedback: `https://apex-apis.azurewebsites.net/api/feedback`
 
 ### ⚠️ IMPORTANT NOTES
 
