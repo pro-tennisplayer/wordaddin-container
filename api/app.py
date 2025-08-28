@@ -35,7 +35,7 @@ db = SQLAlchemy(app)
 # Models
 class Embedding(db.Model):
     __tablename__ = 'embeddings'
-    __table_args__ = {'schema': 'rag_memory'}
+    __table_args__ = {'schema': 'chat_memory'}  # Changed from 'rag_memory' to 'chat_memory'
     
     id = db.Column(db.String(36), primary_key=True)
     tenant_id = db.Column(db.String(255), nullable=False, index=True)
@@ -83,11 +83,11 @@ def health_check():
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         return jsonify({
-            'status': 'ok',
+            'status': 'error',
             'timestamp': datetime.utcnow().isoformat(),
-            'database': 'connecting',
-            'message': 'Database connection in progress'
-        }), 200
+            'database': 'disconnected',
+            'message': f'Database connection failed: {str(e)}'
+        }), 500
 
 @app.route('/memory', methods=['GET'])
 def get_memory():
