@@ -1,11 +1,10 @@
 import azure.functions as func
 import json
 from datetime import datetime
-import asyncio
 import os
 import urllib.parse
 
-async def main(req: func.HttpRequest) -> func.HttpResponse:
+def main(req: func.HttpRequest) -> func.HttpResponse:
     """GET endpoint to retrieve feedback"""
     try:
         # Get query parameters
@@ -14,7 +13,7 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
         response_id = req.params.get('response_id')
         limit = req.params.get('limit', '10')
         
-        # For now, return mock data since asyncpg needs more setup
+        # For now, return mock data since pg8000 needs more setup
         mock_data = [
             {
                 "id": "mock-feedback-1",
@@ -22,7 +21,7 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
                 "user_id": user_id or "default-user",
                 "response_id": response_id or "default-response",
                 "rating": 5,
-                "feedback_text": "This is mock feedback data - asyncpg integration in progress",
+                "feedback_text": "This is mock feedback data - pg8000 integration in progress",
                 "created_at": datetime.utcnow().isoformat(),
                 "metadata": {"source": "mock", "status": "testing"}
             }
@@ -32,7 +31,7 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
             json.dumps({
                 'status': 'success',
                 'data': mock_data,
-                'message': 'Mock feedback data returned - asyncpg integration in progress'
+                'message': 'Mock feedback data returned - pg8000 integration in progress'
             }),
             status_code=200,
             mimetype="application/json"

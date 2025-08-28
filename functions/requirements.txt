@@ -1,8 +1,8 @@
 # Azure Functions dependencies
 azure-functions==1.17.0
 
-# Database connectivity - pure Python async driver
-asyncpg==0.29.0
+# Database connectivity - pure Python driver (no C extensions)
+pg8000==1.30.5
 
 # Environment and utilities
 python-dotenv==1.0.0

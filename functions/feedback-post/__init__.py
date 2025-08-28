@@ -1,11 +1,10 @@
 import azure.functions as func
 import json
 from datetime import datetime
-import asyncio
 import os
 import urllib.parse
 
-async def main(req: func.HttpRequest) -> func.HttpResponse:
+def main(req: func.HttpRequest) -> func.HttpResponse:
     """POST endpoint to save feedback"""
     try:
         # Parse request body
@@ -36,10 +35,10 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
                 mimetype="application/json"
             )
         
-        # For now, return success with mock data since asyncpg needs more setup
+        # For now, return success with mock data since pg8000 needs more setup
         mock_response = {
             'status': 'success',
-            'message': 'Feedback saved successfully (mock) - asyncpg integration in progress',
+            'message': 'Feedback saved successfully (mock) - pg8000 integration in progress',
             'data': {
                 'id': 'mock-feedback-id',
                 'tenant_id': req_body['tenant_id'],

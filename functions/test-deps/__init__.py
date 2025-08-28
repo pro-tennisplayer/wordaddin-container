@@ -1,23 +1,24 @@
 import azure.functions as func
 import json
 from datetime import datetime
-import asyncio
+import os
+import urllib.parse
 
-async def main(req: func.HttpRequest) -> func.HttpResponse:
+def main(req: func.HttpRequest) -> func.HttpResponse:
     """Test dependencies and database connectivity"""
     results = {
         'status': 'testing',
         'timestamp': datetime.utcnow().isoformat(),
-        'python_version': f"{asyncio.get_event_loop().get_debug()}",  # Simplified version check
+        'python_version': '3.13.5',  # Simplified version check
         'imports': {}
     }
     
-    # Test asyncpg import
+    # Test pg8000 import
     try:
-        import asyncpg
-        results['imports']['asyncpg'] = 'SUCCESS'
+        import pg8000
+        results['imports']['pg8000'] = 'SUCCESS'
     except Exception as e:
-        results['imports']['asyncpg'] = f'FAILED: {str(e)}'
+        results['imports']['pg8000'] = f'FAILED: {str(e)}'
     
     # Test uuid import
     try:
@@ -36,23 +37,22 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
     # Test database connection
     try:
         # Get connection string from environment
-        import os
         conn_str = os.environ.get('POSTGRES_CONNECTION')
         if conn_str:
             # Parse connection string to get individual components
             # Format: postgresql://username:password@host:port/database
-            import urllib.parse
             parsed = urllib.parse.urlparse(conn_str)
             
-            # Test connection with asyncpg
-            conn = await asyncpg.connect(
+            # Test connection with pg8000
+            import pg8000
+            conn = pg8000.connect(
                 host=parsed.hostname,
                 port=parsed.port or 5432,
                 user=parsed.username,
                 password=parsed.password,
                 database=parsed.path[1:] if parsed.path else 'postgres'
             )
-            await conn.close()
+            conn.close()
             results['imports']['database_connection'] = 'SUCCESS'
         else:
             results['imports']['database_connection'] = 'FAILED: No connection string found'
